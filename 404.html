@@ -6,8 +6,134 @@
   <base href="https://BitsOsmelDosSantos.github.io/mapa/">  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" />
+	<script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+   	<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"/>
+        <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+        <style>
+          #autocomplete {
+            z-index: 100;
+            margin-bottom: 5px;
+          }
+          #map {
+            width: 800px;
+            height: 600px;
+            border: 1px solid black;
+            z-index: 0;
+          }
+     </style>
 <link rel="stylesheet" href="styles.8bf393c3628fcd845c14.css"></head>
 <body>
   <app-root></app-root>
-<script src="runtime-es2015.0dae8cbc97194c7caed4.js" type="module"></script><script src="runtime-es5.0dae8cbc97194c7caed4.js" nomodule defer></script><script src="polyfills-es5.2237b5d0d7a85091411d.js" nomodule defer></script><script src="polyfills-es2015.f332a089ad1600448873.js" type="module"></script><script src="main-es2015.b342962cb7050f3a1484.js" type="module"></script><script src="main-es5.b342962cb7050f3a1484.js" nomodule defer></script></body>
+  <script>
+
+    var url = 'cuba.json';
+    var arr = [];
+    var arr1 = [];
+    // Initialize autocomplete.
+    $( "#autocomplete" ).autocomplete();
+
+    var map = L.map('map').setView([47.7541, -107.05078], 3);
+
+    var OpenStreetMap_BlackAndWhite = L.tileLayer('https://www.openstreetmap.org/#map=8/22.419/-80.442.png', {
+    maxZoom: 18,
+    attribution: '© <a href="://wwhttpw.openstreetmap.org/copyright">OpenStreetMap</a>'
+    });
+    OpenStreetMap_BlackAndWhite.addTo(map);
+
+    // Set style function
+    function style(feature) {
+    return {
+         fillColor: 'green',
+         fillOpacity: 0.5,
+         weight: 2,
+         opacity: 1,
+         color: '#ffffff',
+         dashArray: '3'
+    };
+    }
+    var highlight = {
+         'fillColor': 'yellow',
+         'weight': 2,
+         'opacity': 1
+    };
+
+
+ function forEachFeature(feature, layer) {
+           // Tagging each state poly with their name for the search control.
+           layer._leaflet_id = feature.properties.STATE_NAME;
+
+           var popupContent = "<p><b>STATE: </b>"+ feature.properties.STATE_NAME +
+               "</br>REGION: "+ feature.properties.SUB_REGION +
+               "</br>STATE ABBR: "+ feature.properties.STATE_ABBR +
+
+           layer.bindPopup(popupContent);
+
+           layer.on("click", function (e) {
+               stateLayer.setStyle(style); //resets layer colors
+               layer.setStyle(highlight);  //highlights selected.
+           });
+ }
+
+
+    // Null variable that will hold layer
+    var stateLayer = L.geoJson(null, {onEachFeature: forEachFeature, style: style});
+
+    $.getJSON(url, function(data) {
+         stateLayer.addData(data);
+
+         for (i = 0; i < data.features.length; i++) {  //loads State Name into an Array for searching
+              arr1.push({label:data.features[i].properties.STATE_NAME, value:""});
+         }
+         addDataToAutocomplete(arr1);  //passes array for sorting and to load search control.
+    });
+
+    stateLayer.addTo(map);
+
+
+    ////////// Autocomplete search
+ function addDataToAutocomplete(arr) {
+
+                arr.sort(function(a, b){ // sort object by Name
+                    var nameA=a.label, nameB=b.label
+                    if (nameA < nameB) //sort string ascending
+                        return -1
+                    if (nameA > nameB)
+                        return 1
+                    return 0 //default return value (no sorting)
+                })
+
+                     // The source for autocomplete.  https://api.jqueryui.com/autocomplete/#method-option
+                  $( "#autocomplete" ).autocomplete("option", "source", arr);
+
+                  $( "#autocomplete" ).on( "autocompleteselect", function( event, ui ) {
+                       polySelect(ui.item.label);  //grabs selected state name
+                       ui.item.value='';
+                  });
+    }	///////////// Autocomplete search end
+
+
+    // fire off click event and zoom to polygon
+   function polySelect(a){
+   map._layers[a].fire('click');  // 'clicks' on state name from search
+   var layer = map._layers[a];
+   map.fitBounds(layer.getBounds());  // zooms to selected poly
+       }
+    // END...fire off click event and zoom to polygon
+
+
+    var baseMaps = {
+         "OSM B&W":OpenStreetMap_BlackAndWhite
+    };
+
+    var overlayMaps = {
+    "USA":stateLayer
+    };
+
+    //Add layer control
+    L.control.layers(baseMaps, overlayMaps).addTo(map);
+
+</script>
+<script src="runtime-es2015.0dae8cbc97194c7caed4.js" type="module"></script><script src="runtime-es5.0dae8cbc97194c7caed4.js" nomodule defer></script><script src="polyfills-es5.2237b5d0d7a85091411d.js" nomodule defer></script><script src="polyfills-es2015.f332a089ad1600448873.js" type="module"></script><script src="main-es2015.0511cf5884e77c74ca4c.js" type="module"></script><script src="main-es5.0511cf5884e77c74ca4c.js" nomodule defer></script></body>
 </html>
